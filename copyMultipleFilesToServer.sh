@@ -16,6 +16,18 @@ intro(){
 	echo
 }
 
+display_help(){
+	echo "Usage: copyMultipleFilesToServer [-h <host_ip>] file1 ... [fileN]"
+}
+
+while getopts ':hs:' option; do
+	case "$option" in
+	h) 	display_help
+		exit
+		;;
+	esac
+done
+
 # Variables
 SRC_HOST_BASE_ROUTE="/home/XXX"
 DEST_HOST_USER="YYY"
