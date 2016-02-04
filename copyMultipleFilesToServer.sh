@@ -7,21 +7,23 @@
 # PRE: Configure id_rsa.pub key file and add it to dest authorized_keys file, to not ask for password in every scp command
 # --------------------------------------------------------------------------------------------------------------------------
 
+# Default values, used if not set in params
+readonly DEFAULT_LOCAL_FOLDER=/home/XXX
+readonly DEFAULT_DEST_HOST_IP=ZZ.ZZ.ZZ.ZZ
+readonly DEFAULT_DEST_HOST_BASE_ROUTE=/home/WW
+readonly DEFAULT_DEST_HOST_USER=YYY
+
 intro(){
 	echo
 	echo
-	echo "************************Copy Files to Server************************"
-	echo "Number of files to copy: $1"
-	echo
-	echo "Details:"
-	echo
-	echo "local_base_folder = "$SRC_HOST_BASE_ROUTE
-	echo
-	echo "dst_host_ip_address = "$DEST_HOST_IP
-	echo "dst_host_folder = "$DEST_HOST_BASE_ROUTE
-	echo "dst_host_user = "$DEST_HOST_USER
 	echo "********************************************************************"
+	echo "Transfer arguments:"
 	echo
+	echo "    local_base_folder = "$SRC_HOST_BASE_ROUTE
+	echo "    dst_host_ip_address = "$DEST_HOST_IP
+	echo "    dst_host_folder = "$DEST_HOST_BASE_ROUTE
+	echo "    dst_host_user = "$DEST_HOST_USER
+	echo "********************************************************************"
 	echo
 }
 
@@ -32,11 +34,27 @@ display_help(){
 	echo
 }
 
+transfer_files(){
+	echo "********************************************************************"
+	echo "Starting file transfer: ("$N" files)"
+	echo
+	# Copy files through scp (having id_rsa.pub key file on server's authorized_keys)
+	oneLineFiles=""
+	for (( i=0;i<$N;i++)); do 
+		arg=${arguments[${i}]}
+		scp $SRC_HOST_BASE_ROUTE/$arg $DEST_HOST_USER@$DEST_HOST_IP:$DEST_HOST_BASE_ROUTE/$arg
+	done
+
+	echo
+	echo "Transfer completed."
+	echo "********************************************************************"
+}
+
 # Variables
-SRC_HOST_BASE_ROUTE="/home/XXX"			# -b route
-DEST_HOST_IP="ZZ.ZZ.ZZ.ZZ"				# -H ip
-DEST_HOST_BASE_ROUTE="/home/WW"			# -d route
-DEST_HOST_USER="YYY"					# -u user
+SRC_HOST_BASE_ROUTE=$DEFAULT_LOCAL_FOLDER
+DEST_HOST_IP=$DEFAULT_DEST_HOST_IP
+DEST_HOST_BASE_ROUTE=$DEFAULT_DEST_HOST_BASE_ROUTE
+DEST_HOST_USER=$DEFAULT_DEST_HOST_USER
 
 # getopts tutorial
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
@@ -59,25 +77,15 @@ while getopts 'hH:u:b:d:' option; do
 	esac
 done
 
-echo $SRC_HOST_BASE_ROUTE
-echo $DEST_HOST_IP
-echo $DEST_HOST_USER
-echo $DEST_HOST_BASE_ROUTE
+# Print details
+intro
 
-# Pass params number to intro function
-intro "$#"
+# Move cursor to get files to copy
+shift $(($OPTIND - 1))
 
 # Store arguments in array
 arguments=("$@") 
 N=${#arguments[@]} 
 
-# Copy files through scp (having id_rsa.pub key file on server's authorized_keys)
-oneLineFiles=""
-for (( i=0;i<$N;i++)); do 
-    arg=${arguments[${i}]}
-	scp $SRC_HOST_BASE_ROUTE/$arg $DEST_HOST_USER@$DEST_HOST_IP:$DEST_HOST_BASE_ROUTE/$arg
-done
-
-echo
-echo "Transfer completed."
-echo "********************************************************************"
+transfer_files
+exit 
