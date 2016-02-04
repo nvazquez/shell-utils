@@ -42,12 +42,40 @@ transfer_files(){
 	oneLineFiles=""
 	for (( i=0;i<$N;i++)); do 
 		arg=${arguments[${i}]}
-		scp $SRC_HOST_BASE_ROUTE/$arg $DEST_HOST_USER@$DEST_HOST_IP:$DEST_HOST_BASE_ROUTE/$arg
+		scp $SRC_HOST_BASE_ROUTE$arg $DEST_HOST_USER@$DEST_HOST_IP:$DEST_HOST_BASE_ROUTE$arg
 	done
 
 	echo
 	echo "Transfer completed."
 	echo "********************************************************************"
+}
+
+normalize_routes(){
+	if [ ! "$SRC_HOST_BASE_ROUTE" ] ; then
+		# If src_host_base_route is null, use current folder by pwd and adding '/' character at the end
+		SRC_HOST_BASE_ROUTE=$(pwd)/
+	elif [ ! $SRC_HOST_BASE_ROUTE == "*/" ] ; then
+		# If is set, check if it doesn't end with '/' character, if not, add it
+		case $SRC_HOST_BASE_ROUTE in
+		*/)	#Ends with '/', do nothing
+			;;
+		*)	SRC_HOST_BASE_ROUTE=$SRC_HOST_BASE_ROUTE/
+			;;
+		esac
+	fi
+	
+	if [ ! "$DEST_HOST_BASE_ROUTE" ] ; then
+		# If dest_host_base_route is null, use / folder
+		DEST_HOST_BASE_ROUTE=/
+	elif [ ! $DEST_HOST_BASE_ROUTE == "*/" ] ; then
+		# If is set, check if it doesn't end with '/' character, if not, add it
+		case $DEST_HOST_BASE_ROUTE in
+		*/)	#Ends with '/', do nothing
+			;;
+		*)	DEST_HOST_BASE_ROUTE=$DEST_HOST_BASE_ROUTE/
+			;;
+		esac
+	fi
 }
 
 # Variables
@@ -78,6 +106,7 @@ while getopts 'hH:u:b:d:' option; do
 done
 
 # Print details
+normalize_routes
 intro
 
 # Move cursor to get files to copy
